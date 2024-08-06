@@ -31,10 +31,10 @@ def download_merops_database(outdir: str) -> None:
 def main() -> None:
     args = parser.parse_args()
 
-    # for subdir in ('sequences', 'alignments', 'hmms'):
-    #     os.makedirs(f'{args.outdir}/{subdir}')
+    for subdir in ('sequences', 'alignments', 'hmms'):
+        os.makedirs(f'{args.outdir}/{subdir}')
     
-    # download_merops_database(f'{args.outdir}/sequences')
+    download_merops_database(f'{args.outdir}/sequences')
 
     clustalo = ClustalOmega(args.clustalo)
 
