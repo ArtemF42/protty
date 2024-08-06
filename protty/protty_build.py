@@ -31,16 +31,16 @@ def download_merops_database(outdir: str) -> None:
 def main() -> None:
     args = parser.parse_args()
 
-    for subdir in ('sequences', 'alignments', 'hmms'):
-        os.makedirs(f'{args.outdir}/{subdir}')
+    # for subdir in ('sequences', 'alignments', 'hmms'):
+    #     os.makedirs(f'{args.outdir}/{subdir}')
     
-    download_merops_database(f'{args.outdir}/sequences')
-    
+    # download_merops_database(f'{args.outdir}/sequences')
+
     clustalo = ClustalOmega(args.clustalo)
 
     alphabet = Alphabet.amino()
     background = Background(alphabet)
-    builder = Builder()
+    builder = Builder(alphabet)
 
     for family in map(lambda filename: os.path.splitext(filename)[0],
                       os.listdir(f'{args.outdir}/sequences')):
@@ -53,13 +53,19 @@ def main() -> None:
                      alphabet=alphabet) as file:
             msa = file.read()
 
-        msa.name = family        
+        msa.name = family.encode()
         hmm, _, _ = builder.build_msa(msa, background)
 
-        with open(f'{args.outdir}/hmms/{family}.hmm') as file:
+        with open(f'{args.outdir}/hmms/{family}.hmm', 'wb') as file:
             hmm.write(file)
 
-        logging.INFO(f'Successfully built profile HMM for {family.upper()}')
+        logging.info(f'Successfully built profile HMM for {family.upper()}')
+
+    with open(f'{args.outdir}/merops.hmm', 'w') as outfile:
+        for filename in os.listdir(f'{args.outdir}/hmms/'):
+            with open(f'{args.outdir}/hmms/{filename}') as infile:
+                for line in infile:
+                    outfile.write(line)
 
 
 parser = ArgumentParser()
