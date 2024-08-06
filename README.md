@@ -16,6 +16,8 @@ pip install protty
 
 # ...
 ## Running `protty-build`
+**Note:** `protty-build` uses [Clustal Omega](http://www.clustal.org/omega/) to perform multiple sequence alignment and requires it to be installed. By default, Protty assumes `clustalo` is in your `PATH`. If this is not the case, you should specify the `--clustalo` parameter
+
 ```bash
 protty-build
 ```
