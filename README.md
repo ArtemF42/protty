@@ -11,18 +11,24 @@ pip install -e .
 ```
 
 ```bash
+# Not available at the moment
 pip install protty
 ```
 
-# ...
+# Building profile HMMs based on MEROPS data
 ## Running `protty-build`
-**Note:** `protty-build` uses [Clustal Omega](http://www.clustal.org/omega/) to perform multiple sequence alignment and requires it to be installed. By default, Protty assumes `clustalo` is in your `PATH`. If this is not the case, you should specify the `--clustalo` parameter
+**Note:** `protty-build` uses [Clustal Omega](http://www.clustal.org/omega/)
+to perform multiple sequence alignment and requires it to be installed.
+By default, Protty assumes `clustalo` is in your `PATH`. If this is not the
+case, you should specify the `--clustalo` parameter
 
 ```bash
-protty-build
+protty-build <path/to/database>
 ```
 
 ## Output
+Once the process is completed, `merops.hmm` will will be created in the
+`<path/to/database>` directory
 
 # ...
 ## Running `protty-scan`
