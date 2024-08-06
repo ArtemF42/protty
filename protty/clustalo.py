@@ -1,12 +1,13 @@
 import os
 import subprocess
+import shutil
 
 
 class ClustalOmega:
     '''A simple wrapper around Clustal Omega (http://www.clustal.org/omega/)'''
 
     def __init__(self, executable: str = 'clustalo') -> None:
-        if os.path.exists(executable):
+        if shutil.which(executable):
             self.executable = executable
         else:
             raise FileNotFoundError(f'failed to find Clustal Omega')
