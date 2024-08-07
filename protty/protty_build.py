@@ -1,77 +1,91 @@
-from argparse import ArgumentParser
-from ftplib import FTP
+import argparse
+import ftplib
 import logging
 import os
+import random
 import re
+import sys
 
-from pyhmmer.easel import Alphabet, MSAFile
-from pyhmmer.plan7 import Background, Builder
+from Bio import SeqIO
 
-from protty.clustalo import ClustalOmega
-
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+from .wrappers import ClustalOmega, HMMER3
 
 
-def download_merops_database(outdir: str) -> None:
+def download_merops_data() -> None:
     HOST = 'ftp.ebi.ac.uk'
     PATH = 'pub/databases/merops/current_release/seqlib/'
 
-    with FTP(HOST) as ftp:
-        ftp.login()
-        ftp.cwd(PATH)
+    try:
+        with ftplib.FTP(HOST) as ftp:
+            ftp.login()
+            ftp.cwd(PATH)
 
-        for filename in ftp.nlst():
-            if re.fullmatch(r'[acgimnpstu]\d+\.lib', filename):
-                with open(f'{outdir}/{filename}', 'wb') as file:
-                    ftp.retrbinary(f'RETR {filename}', file.write)
-                
-                logging.info(f'File {filename} was successfully downloaded')
-    
+            for filename in ftp.nlst():
+                if re.fullmatch(r'[acgimnpstu]\d+\.lib', filename):
+                    with open(f'{OUTDIR}/raw/{filename}', 'wb') as file:
+                        ftp.retrbinary(f'RETR {filename}', file.write)
+                    
+                    logging.info(f'File {filename} was successfully downloaded')
+    except ftplib.all_errors as error:
+        # logging.error()
+        sys.exit('Failed to download MEROPS data')
+
+
+def filter_fasta(filename: str, min_sequences: int, max_sequences: int) -> bool:
+    records = list(SeqIO.parse(f'{OUTDIR}/raw/{filename}', 'fasta'))
+
+    if len(records) > min_sequences:
+        if len(records) > max_sequences:
+            records = random.sample(records, max_sequences)
+            logging.info(f'File {filename} was trimmed')
+        
+        SeqIO.write(records, f'{OUTDIR}/filtered/{filename}', 'fasta')
+        return True
+    else:
+        logging.info(f'File {filename} was ignored (< {min_sequences} sequences)')
+        return False
+
+
+def parse_arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--min', default=5)
+    parser.add_argument('--max', default=1000)
+    parser.add_argument('--threads', '-t', default=os.cpu_count())
+    parser.add_argument('outdir')
+
+    return parser.parse_args()
+
 
 def main() -> None:
-    args = parser.parse_args()
+    args = parse_arguments()
 
-    for subdir in ('sequences', 'alignments', 'hmms'):
-        os.makedirs(f'{args.outdir}/{subdir}')
-    
-    download_merops_database(f'{args.outdir}/sequences')
+    clustalo = ClustalOmega()
+    hmmer3 = HMMER3()
 
-    clustalo = ClustalOmega(args.clustalo)
+    global OUTDIR
+    OUTDIR = args.outdir
 
-    alphabet = Alphabet.amino()
-    background = Background(alphabet)
-    builder = Builder(alphabet)
+    logging.basicConfig(filename=f'{OUTDIR}/protty.log', filemode='w',
+                        format='%(levelname)s: %(message)s', level=logging.INFO)
 
-    for family in map(lambda filename: os.path.splitext(filename)[0],
-                      os.listdir(f'{args.outdir}/sequences')):
-        clustalo(f'{args.outdir}/sequences/{family}.lib',
-                 f'{args.outdir}/alignments/{family}.fasta',
-                 threads=args.threads)
-        
-        with MSAFile(f'{args.outdir}/alignments/{family}.fasta',
-                     digital=True,
-                     alphabet=alphabet) as file:
-            msa = file.read()
+    for subdir in ('raw', 'filtered', 'msa', 'profiles'):
+        os.makedirs(f'{OUTDIR}/{subdir}')
 
-        msa.name = family.encode()
-        hmm, _, _ = builder.build_msa(msa, background)
+    download_merops_data()
 
-        with open(f'{args.outdir}/hmms/{family}.hmm', 'wb') as file:
-            hmm.write(file)
-
-        logging.info(f'Successfully built profile HMM for {family.upper()}')
-
-    with open(f'{args.outdir}/merops.hmm', 'w') as outfile:
-        for filename in os.listdir(f'{args.outdir}/hmms/'):
-            with open(f'{args.outdir}/hmms/{filename}') as infile:
+    for filename in os.listdir(f'{OUTDIR}/raw'):
+        if filter_fasta(filename, args.min, args.max):
+            family, _ = os.path.splitext(filename)
+            
+            clustalo.align(f'{OUTDIR}/filtered/{filename}',
+                           f'{OUTDIR}/msa/{family}.alignment.fasta',
+                           threads=args.threads)
+            hmmer3.build(f'{OUTDIR}/profiles/{family}.hmm',
+                         f'{OUTDIR}/msa/{family}.alignment.fasta', family)
+            
+    with open(f'{OUTDIR}/merops.hmm', 'w') as infile:
+        for filename in os.listdir(f'{OUTDIR}/profiles'):
+            with open(f'{OUTDIR}/profiles/{filename}') as outfile:
                 for line in infile:
                     outfile.write(line)
-
-
-parser = ArgumentParser()
-
-parser.add_argument('--clustalo', default='clustalo',
-                    help='Path to Clustal Omega executable')
-parser.add_argument('--threads', default=None,
-                    help='Number of processors to use')
-parser.add_argument('outdir', help='Directory to store all result files')
