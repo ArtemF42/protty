@@ -8,6 +8,9 @@ import sys
 
 from Bio import SeqIO
 
+from pyhmmer.easel import Alphabet, MSAFile
+from pyhmmer.plan7 import Background, Builder
+
 from .wrappers import ClustalOmega, ProgramNotFoundError
 
 
@@ -33,7 +36,8 @@ def download_merops_data() -> None:
 
 
 def filter_fasta(filename: str, min_records: int, max_records: int) -> bool:
-    records = list(SeqIO.parse(f'{OUTDIR}/raw/{filename}', 'fasta'))
+    with open(f'{OUTDIR}/raw/{filename}', errors='ignore') as file:
+        records = list(SeqIO.parse(file, 'fasta'))
 
     if len(records) < min_records:
         logging.info(f'File {filename} was ignored (< {min_records} records)')
@@ -47,9 +51,21 @@ def filter_fasta(filename: str, min_records: int, max_records: int) -> bool:
         return True
 
 
-def build_profile() -> None:
-    ...
+def build_profile_hmm(family: str) -> None:
+    with MSAFile(f'{OUTDIR}/msa/{family}.fasta', digital=True) as msafile:
+        msa = msafile.read()
+        msa.name = family.encode()
+    
+    alphabet = Alphabet.amino()
+    builder = Builder(alphabet)
+    background = Background(alphabet)
 
+    hmm, *_ = builder.build_msa(msa, background)
+
+    with open(f'{OUTDIR}/profiles/{family}.hmm', 'wb') as hmmfile:
+        hmm.write(hmmfile)
+    
+    logging.info(f'Successfully built profile HMM for {family}')
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,7 +74,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--min', default=5, type=int)
     parser.add_argument('--max', default=1000, type=int)
     parser.add_argument('--clustalo', default='clustalo')
-    parser.add_argument('--threads', default=os.cpu_count(), type=int)
+    parser.add_argument('--threads', '-t', default=os.cpu_count(), type=int)
+    # parser.add_argument('--force', '-f')
     parser.add_argument('outdir')
 
     return parser.parse_args()
@@ -86,7 +103,11 @@ def main() -> None:
     download_merops_data()
 
     for filename in os.listdir(f'{OUTDIR}/raw/'):
-        if filter_fasta(filename, args.min, args.max):
-            pass
+        family = os.path.splitext(filename)[0]
 
-    
+        if filter_fasta(filename, args.min, args.max):
+            clustalo.run(f'{OUTDIR}/filtered/{filename}',
+                         f'{OUTDIR}/msa/{family}.fasta',
+                         threads=args.threads)
+            
+            build_profile_hmm(family)
