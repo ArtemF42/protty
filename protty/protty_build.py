@@ -75,7 +75,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--max', default=1000, type=int)
     parser.add_argument('--clustalo', default='clustalo')
     parser.add_argument('--threads', '-t', default=os.cpu_count(), type=int)
-    # parser.add_argument('--force', '-f')
     parser.add_argument('outdir')
 
     return parser.parse_args()
