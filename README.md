@@ -5,6 +5,13 @@ proteases in query protein sequences
 
 # Installation
 ```bash
+git clone https://github.com/ArtemF42/protty.git
+cd protty
+pip install -e .
+```
+
+```bash
+# Not available at the moment
 pip install protty
 ```
 
@@ -16,8 +23,25 @@ By default, Protty assumes `clustalo` is in your `PATH`. If this is not the
 case, you should specify the `--clustalo` parameter
 
 ```bash
-protty-build path/to/database
+protty-build [options] $DATABASE
 ```
 
 ## Output
+Once the process is complete, the profile HMMs will be available in
+`$DATABASE/profiles`. The easiest way to merge them into the database is
+to use `cat`
 
+```bash
+cat $DATABASE/profiles/*.hmm > $DATABASE/merops.hmm
+```
+
+# Scanning query sequences against the database
+## Running `protty-scan`
+```bash
+protty-scan [options] $DATABASE/merops.hmm proteins.faa
+```
+
+## Output
+By default, `protty-scan` generates two files named `predicted_proteases.tsv`
+and `predicted_proteases.faa`, located in the working directory. Use `--tsv`
+and `--faa` options to change the default behavior
