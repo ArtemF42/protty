@@ -1,6 +1,9 @@
-import logging
 import shutil
 import subprocess
+import sys
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 
 class ProgramNotFoundError(Exception):
@@ -19,10 +22,7 @@ class _BaseWrapper:
             subprocess.run((self.executable, *map(str, args)),
                            capture_output=True, check=True, text=True)
         except subprocess.CalledProcessError as error:
-            #TODO
-            return False
-        else:
-            return True
+            logger.error(f'Failed to run {self.name}', exc_info=error)
 
     @property
     def name(self) -> str:
@@ -33,6 +33,17 @@ class ClustalOmega(_BaseWrapper):
     '''A simple wrapper around Clustal Omega (http://www.clustal.org/omega/)'''
     
     def run(self, infile: str, outfile: str, threads: int) -> bool:
+        '''Runs Clustal Omega with specified input file, output file, and number
+        of threads
+
+        Args:
+            infile (str): path to the input file
+            outfile (str): path to the output file
+            threads (int): number of threads to use
+
+        Returns:
+            bool: True if the program completed successfully, False otherwise
+        '''
         super().run('-i', infile, '-o', outfile, '--threads', threads)
     
     @property
