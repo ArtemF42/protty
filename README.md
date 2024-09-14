@@ -34,6 +34,19 @@ to use `cat`
 ```bash
 cat $DATABASE/profiles/*.hmm > $DATABASE/merops.hmm
 ```
+## Advanced usage
+The `protty-build` pipeline consists of 3 major steps:
+
+1. Downloading MEROPS data
+2. Filtering raw FASTA files
+3. Building profile HMMs
+
+Use `--skip` option if you want to manually control the pipeline. For example,
+the command below will only download data from the MEROPS server
+
+```bash
+protty-build --skip 2,3 $DATABASE
+```
 
 # Scanning query sequences against the database
 ## Running `protty-scan`
