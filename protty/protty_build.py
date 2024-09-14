@@ -89,7 +89,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('outdir')
 
     args = parser.parse_args()
-    args.skip = set(map(int, args.skip.split(',')))
+    args.skip = set(map(int, args.skip.split(','))) if args.skip else set()
 
     return args
 
