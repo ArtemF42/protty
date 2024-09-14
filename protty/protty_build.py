@@ -1,9 +1,7 @@
 import argparse
-import ftplib
 import logging
 import os
 import random
-import re
 import sys
 
 from Bio import SeqIO
@@ -12,27 +10,6 @@ from pyhmmer.easel import Alphabet, MSAFile
 from pyhmmer.plan7 import Background, Builder
 
 from .wrappers import ClustalOmega, ProgramNotFoundError
-
-
-def download_merops_data() -> None:
-    HOST = 'ftp.ebi.ac.uk'
-    PATH = 'pub/databases/merops/current_release/seqlib/'
-
-    logging.info('Started to download MEROPS data')
-
-    try:
-        with ftplib.FTP(HOST) as ftp:
-            ftp.login()
-            ftp.cwd(PATH)
-
-            for filename in ftp.nlst():
-                if re.match(r'[acgimnpstu]\d+\.lib', filename):
-                    with open(f'{OUTDIR}/raw/{filename}', 'wb') as file:
-                        ftp.retrbinary(f'RETR {filename}', file.write)
-            
-            logging.info('Successfully downloaded MEROPS data')
-    except ftplib.all_errors as error:
-        sys.exit('Failed to download MEROPS data')
 
 
 def filter_fasta(filename: str, min_records: int, max_records: int) -> bool:
