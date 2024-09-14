@@ -84,9 +84,14 @@ def parse_args() -> argparse.Namespace:
                         help='path to Clustal Omega executable')
     parser.add_argument('--threads', default=os.cpu_count(), type=int,
                         help='number of threads to use')
+    parser.add_argument('--skip', default='',
+                        help='comma-separated list of steps to skip')
     parser.add_argument('outdir')
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.skip = set(map(int, args.skip.split(',')))
+
+    return args
 
 
 def main() -> None:
@@ -107,25 +112,28 @@ def main() -> None:
             os.makedirs(path)
 
     # STEP 1. Download MEROPS data
-    if not download(f'{args.outdir}/raw'):
-        sys.exit('An error occurred while downloading MEROPS data. '
-                 'See log file for details.')
+    if not 1 in args.skip:
+        if not download(f'{args.outdir}/raw'):
+            sys.exit('An error occurred while downloading MEROPS data. '
+                    'See log file for details.')
         
     # STEP 2. Filter FASTA files
-    for filename in track(os.listdir(f'{args.outdir}/raw'),
-                          description='Filtering...'):
-        filter_fasta(args.outdir, filename, args.min, args.max)
+    if not 2 in args.skip:
+        for filename in track(os.listdir(f'{args.outdir}/raw'),
+                            description='Filtering...'):
+            filter_fasta(args.outdir, filename, args.min, args.max)
     
     # STEP 3. Align protein sequences & build profile HMMs
-    try:
-        clustalo = ClustalOmega(args.clustalo)
-    except ProgramNotFoundError as error:
-        sys.exit('Could not find Clustal Omega')
-    
-    for filename in track(os.listdir(f'{args.outdir}/filtered'),
-                          description='Building HMMs...'):
-        family = os.path.splitext(filename)[0]
-        clustalo.run(f'{args.outdir}/filtered/{filename}',
-                     f'{args.outdir}/msa/{family}.fasta',
-                     threads=args.threads)
-        build_profile_hmm(family)
+    if not 3 in args.skip:
+        try:
+            clustalo = ClustalOmega(args.clustalo)
+        except ProgramNotFoundError as error:
+            sys.exit('Could not find Clustal Omega')
+        
+        for filename in track(os.listdir(f'{args.outdir}/filtered'),
+                            description='Building HMMs...'):
+            family = os.path.splitext(filename)[0]
+            clustalo.run(f'{args.outdir}/filtered/{filename}',
+                        f'{args.outdir}/msa/{family}.fasta',
+                        threads=args.threads)
+            build_profile_hmm(family)
