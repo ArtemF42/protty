@@ -136,4 +136,4 @@ def main() -> None:
             clustalo.run(f'{args.outdir}/filtered/{filename}',
                         f'{args.outdir}/msa/{family}.fasta',
                         threads=args.threads)
-            build_profile_hmm(family)
+            build_profile_hmm(args.outdir, family)
