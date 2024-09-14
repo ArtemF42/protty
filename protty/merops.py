@@ -9,11 +9,14 @@ HOST = 'ftp.ebi.ac.uk'
 PATH = 'pub/databases/merops/current_release/seqlib/'
 
 
-def download(dst: str) -> None:
+def download(dst: str) -> bool:
     '''Downloads MEROPS data to the specified directory
 
     Args:
         dst (str): output directory
+
+    Returns:
+        bool: True if the database was downloaded, False otherwise
     '''
     logger.info('Started to download MEROPS data')
 
@@ -28,5 +31,7 @@ def download(dst: str) -> None:
                         ftp.retrbinary(f'RETR {filename}', file.write)
                 
             logger.info('Successfully downloaded MEROPS data')
+            return True
     except all_errors as error:
         logger.error('Failed to download MEROPS data', exc_info=error)
+        return False
