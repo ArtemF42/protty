@@ -11,7 +11,8 @@ authors = [{name = "Artem Fatkulin", email = "artem42fatkulin@gmail.com"}]
 requires-python = ">=3.8"
 dependencies = [
     "biopython",
-    "pyhmmer"
+    "pyhmmer",
+    "rich"
 ]
 
 [project.scripts]
