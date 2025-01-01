@@ -16,3 +16,6 @@ dependencies = [
 
 [project.scripts]
 protty-scan = "protty.scan:main"
+
+[tool.ruff.format]
+quote-style = "single"
