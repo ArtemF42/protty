@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "protty"
+version = "0.0.42"
+description = "Protty: A pretty simple tool for protease prediction"
+readme = "README.md"
+authors = [{name = "Artem Fatkulin", email = "artem42fatkulin@gmail.com"}]
+requires-python = ">=3.8"
+dependencies = [
+    "biopython",
+    "pyhmmer"
+]
+
+[project.scripts]
+protty-scan = "protty.scan:main"
