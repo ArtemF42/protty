@@ -7,6 +7,15 @@ git clone https://github.com/ArtemF42/protty.git
 pip install ./protty
 ```
 
+## Building profile HMMs
+### Running `protty-build`
+```bash
+protty-build [options] /PATH/TO/DATABASE/
+```
+
+### Output
+Once the process is complete, the database will be available at `/PATH/TO/DATABASE/merops.hmm`
+
 ## Scanning query sequences against the database
 ### Running `protty-scan`
 ```bash
