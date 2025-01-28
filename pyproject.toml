@@ -11,11 +11,13 @@ authors = [{name = "Artem Fatkulin", email = "artem42fatkulin@gmail.com"}]
 requires-python = ">=3.8"
 dependencies = [
     "biopython",
-    "pyhmmer"
+    "pyhmmer",
+    "rich"
 ]
 
 [project.scripts]
-protty-scan = "protty.scan:main"
+protty-build = "protty.scripts.build:main"
+protty-scan = "protty.scripts.scan:main"
 
 [tool.ruff.format]
 quote-style = "single"
